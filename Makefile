@@ -1,4 +1,3 @@
 all    :; dapp build
 clean  :; dapp clean
-test   :; dapp test
-deploy :; dapp create DssProxy
+test   :; dapp --use solc:0.8.9 test -v
