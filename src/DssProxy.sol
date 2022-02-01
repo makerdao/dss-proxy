@@ -17,7 +17,7 @@
 pragma solidity ^0.8.9;
 
 contract DssProxy {
-    address public owner;
+    address immutable public owner;
 
     constructor(address owner_) {
         owner = owner_;
