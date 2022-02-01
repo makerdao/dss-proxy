@@ -29,7 +29,7 @@ contract DssProxyRegistry {
         code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
     }
 
-    function getProxy(address owner_) public view returns (address proxy) {
+    function proxies(address owner_) public view returns (address proxy) {
         proxy = seed[owner_] == 0
             ? address(0)
             : address(
@@ -49,7 +49,7 @@ contract DssProxyRegistry {
     }
 
     function build(address owner_) public returns (address payable proxy) {
-        address payable proxy_ = payable(getProxy(owner_));
+        address payable proxy_ = payable(proxies(owner_));
         require(proxy_ == address(0) || DssProxy(proxy_).owner() != owner_); // Not allow new proxy if the user already has one and remains being the owner
         seed[owner_]++;
         uint256 salt = _getSalt(owner_);

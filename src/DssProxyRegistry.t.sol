@@ -14,11 +14,11 @@ contract DssProxyTest is DSTest {
     }
 
     function test_proxy_creation() public {
-        assertEq(registry.getProxy(address(this)), address(0));
+        assertEq(registry.proxies(address(this)), address(0));
         assertEq(registry.seed(address(this)), 0);
         address payable proxy = registry.build(address(this));
         assertEq(registry.seed(address(this)), 1);
-        assertEq(registry.getProxy(address(this)), proxy);
+        assertEq(registry.proxies(address(this)), proxy);
         assertEq(DssProxy(proxy).owner(), address(this));
     }
 
