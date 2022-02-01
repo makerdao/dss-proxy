@@ -62,6 +62,12 @@ contract DssProxyTest is DSTest {
         action = address(new TestAction());
     }
 
+    function test_setOwner() public {
+        assertEq(proxy.owner(), address(this));
+        proxy.setOwner(address(123));
+        assertEq(proxy.owner(), address(123));
+    }
+
     function test_execute() public {
         bytes memory response = proxy.execute(action, abi.encodeWithSignature("getBytes32()"));
         bytes32 response32;

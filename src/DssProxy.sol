@@ -19,6 +19,8 @@ pragma solidity ^0.8.9;
 contract DssProxy {
     address public owner;
 
+    event SetOwner(address indexed owner_);
+
     constructor(address owner_) {
         owner = owner_;
     }
@@ -29,6 +31,11 @@ contract DssProxy {
     modifier onlyOwner {
         require(msg.sender == owner, "DssProxy/not-owner");
         _;
+    }
+
+    function setOwner(address owner_) external onlyOwner {
+        owner = owner_;
+        emit SetOwner(owner_);
     }
 
     function execute(address _target, bytes memory _data)

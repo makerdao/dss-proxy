@@ -19,8 +19,10 @@ pragma solidity ^0.8.9;
 import "./DssProxy.sol";
 
 contract DssProxyRegistry {
-    function _getSalt(address owner_) internal pure returns (uint256 salt) {
-        salt = uint256(uint160(owner_));
+    mapping (address => uint256) public seed;
+
+    function _getSalt(address owner_) internal view returns (uint256 salt) {
+        salt = uint256(keccak256(abi.encode(owner_, seed[owner_])));
     }
 
     function _getCode(address owner_) internal pure returns (bytes memory code) {
@@ -28,28 +30,32 @@ contract DssProxyRegistry {
     }
 
     function getProxy(address owner_) public view returns (address proxy) {
-        proxy = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            bytes1(0xff),
-                            address(this),
-                            _getSalt(owner_),
-                            keccak256(_getCode(owner_))
+        proxy = seed[owner_] == 0
+            ? address(0)
+            : address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                bytes1(0xff),
+                                address(this),
+                                _getSalt(owner_),
+                                keccak256(_getCode(owner_))
+                            )
                         )
                     )
                 )
-            )
-        );
+            );
     }
 
     function build(address owner_) public returns (address payable proxy) {
+        address payable proxy_ = payable(getProxy(owner_));
+        require(proxy_ == address(0) || DssProxy(proxy_).owner() != owner_); // Not allow new proxy if the user already has one and remains being the owner
+        seed[owner_]++;
         uint256 salt = _getSalt(owner_);
         bytes memory code = _getCode(owner_);
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
-        require(proxy != address(0), "DssProxyRegistry/proxy-already-created");
     }
 }
