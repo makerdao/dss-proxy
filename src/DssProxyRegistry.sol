@@ -21,11 +21,11 @@ import "./DssProxy.sol";
 contract DssProxyRegistry {
     mapping (address => uint256) public seed;
 
-    function _getSalt(address owner_) internal view returns (uint256 salt) {
+    function _salt(address owner_) internal view returns (uint256 salt) {
         salt = uint256(keccak256(abi.encode(owner_, seed[owner_])));
     }
 
-    function _getCode(address owner_) internal pure returns (bytes memory code) {
+    function _code(address owner_) internal pure returns (bytes memory code) {
         code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
     }
 
@@ -39,8 +39,8 @@ contract DssProxyRegistry {
                             abi.encodePacked(
                                 bytes1(0xff),
                                 address(this),
-                                _getSalt(owner_),
-                                keccak256(_getCode(owner_))
+                                _salt(owner_),
+                                keccak256(_code(owner_))
                             )
                         )
                     )
@@ -48,12 +48,12 @@ contract DssProxyRegistry {
             );
     }
 
-    function build(address owner_) public returns (address payable proxy) {
+    function build(address owner_) external returns (address payable proxy) {
         address payable proxy_ = payable(proxies(owner_));
         require(proxy_ == address(0) || DssProxy(proxy_).owner() != owner_); // Not allow new proxy if the user already has one and remains being the owner
         seed[owner_]++;
-        uint256 salt = _getSalt(owner_);
-        bytes memory code = _getCode(owner_);
+        uint256 salt = _salt(owner_);
+        bytes memory code = _code(owner_);
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }

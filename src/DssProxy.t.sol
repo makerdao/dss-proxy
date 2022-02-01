@@ -53,6 +53,12 @@ contract WithdrawFunds {
     }
 }
 
+contract AllowEveryoneAuthority {
+    function canCall(address, address, bytes4) external pure returns (bool) {
+        return true;
+    }
+}
+
 contract DssProxyTest is DSTest {
     DssProxy proxy;
     address action;
@@ -66,6 +72,12 @@ contract DssProxyTest is DSTest {
         assertEq(proxy.owner(), address(this));
         proxy.setOwner(address(123));
         assertEq(proxy.owner(), address(123));
+    }
+
+    function test_setAuthority() public {
+        assertEq(proxy.authority(), address(0));
+        proxy.setAuthority(address(123));
+        assertEq(proxy.authority(), address(123));
     }
 
     function test_execute() public {
@@ -82,6 +94,22 @@ contract DssProxyTest is DSTest {
     function testFail_execute_not_owner() public {
         DssProxy proxy2 = new DssProxy(address(123));
         proxy2.execute(action, abi.encodeWithSignature("getBytes32()"));
+    }
+
+    function test_execute_not_owner() public {
+        DssProxy proxy2 = new DssProxy(address(this));
+        proxy2.setAuthority(address(new AllowEveryoneAuthority()));
+        proxy2.setOwner(address(123));
+        assertEq(proxy2.owner(), address(123));
+
+        bytes memory response = proxy2.execute(action, abi.encodeWithSignature("getBytes32()"));
+        bytes32 response32;
+
+        assembly {
+            response32 := mload(add(response, 32))
+        }
+
+        assertEq32(response32, bytes32("Hello"));
     }
 
     function test_execute2Values() public {
