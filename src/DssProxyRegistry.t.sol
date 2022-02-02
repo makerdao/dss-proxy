@@ -76,25 +76,25 @@ contract DssProxyTest is DSTest {
 		assertEq(registry.proxies(address(usr2)), proxyAddr);
 	}
 
-	function testFail_ClaimOwnedProxy() internal {
+	function testFail_ClaimOwnedProxy() public {
 		Usr usr1 = new Usr();
 
 		address payable proxyAddr = registry.build(address(usr1));
 		assertTrue(proxyAddr != address(0));
 
-		assertEq(address(registry.proxies(address(usr1))), proxyAddr);
+		assertEq(payable(registry.proxies(address(usr1))), proxyAddr);
 
 		registry.claim(proxyAddr, address(usr1), address(123));
 	}
 
-	function testFail_ClaimOtherProxy() internal {
+	function testFail_ClaimOtherProxy() public {
 		Usr usr1 = new Usr();
 		Usr usr2 = new Usr();
 
 		address payable proxyAddr = registry.build(address(usr1));
 		assertTrue(proxyAddr != address(0));
 
-		assertEq(address(registry.proxies(address(usr1))), proxyAddr);
+		assertEq(payable(registry.proxies(address(usr1))), proxyAddr);
 
 		registry.claim(proxyAddr, address(usr1), address(usr2));
 	}
