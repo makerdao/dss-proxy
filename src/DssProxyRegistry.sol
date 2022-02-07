@@ -21,6 +21,7 @@ import "./DssProxy.sol";
 contract DssProxyRegistry {
     mapping (address => uint256) public seed;
     mapping (address => address) public proxies;
+    mapping (address => uint256) public isProxy;
 
     function _salt(address owner_) internal view returns (uint256 salt) {
         salt = uint256(keccak256(abi.encode(owner_, seed[owner_])));
@@ -31,7 +32,8 @@ contract DssProxyRegistry {
     }
 
     function build(address owner_) external returns (address payable proxy) {
-        require(proxies[owner_] == address(0), "DssProxyRegistry/proxy-already-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
+        proxy = payable(proxies[owner_]);
+        require(proxy == address(0) || DssProxy(payable(proxy)).owner() != owner_, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
         seed[owner_]++;
         uint256 salt = _salt(owner_);
         bytes memory code = _code(owner_);
@@ -39,15 +41,14 @@ contract DssProxyRegistry {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
         proxies[owner_] = proxy;
+        isProxy[proxy] = 1;
     }
 
-    function claim(address payable proxy, address src, address dst) external {
-        address currentDst = proxies[dst];
-        require(currentDst == address(0) || DssProxy(payable(currentDst)).owner() != dst, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
-        require(DssProxy(proxy).owner() == dst, "DssProxyRegistry/proxy-not-owned-by-dst");
-        require(proxies[src] == proxy, "DssProxyRegistry/must-provide-a-valid-previous-owner");
-
-        proxies[src] = address(0);
-        proxies[dst] = proxy;
+    function claim(address payable proxy) external {
+        require(isProxy[proxy] == 1, "DssProxyRegistry/not-proxy-from-this-registry");
+        address owner = DssProxy(proxy).owner();
+        address payable prevProxy = payable(proxies[owner]);
+        require(prevProxy == address(0) || DssProxy(prevProxy).owner() != owner, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
+        proxies[owner] = proxy;
     }
 }
