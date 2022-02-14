@@ -44,6 +44,9 @@ contract DssProxyRegistry {
         isProxy[proxy] = 1;
     }
 
+    // This function needs to be used carefully, you should only claim a proxy you trust on.
+    // A proxy might be set up with an authority or just simple allowances that might make an
+    // attacker to take funds that are sitting in the proxy.
     function claim(address proxy) external {
         require(isProxy[proxy] == 1, "DssProxyRegistry/not-proxy-from-this-registry");
         address owner = DssProxy(payable(proxy)).owner();
