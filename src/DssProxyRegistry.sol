@@ -20,6 +20,8 @@ import "./DssProxy.sol";
 
 contract DssProxyRegistry {
     mapping (address => uint256) public seed;
+    mapping (address => address) public proxies;
+    mapping (address => uint256) public isProxy;
 
     function _salt(address owner_) internal view returns (uint256 salt) {
         salt = uint256(keccak256(abi.encode(owner_, seed[owner_])));
@@ -29,33 +31,28 @@ contract DssProxyRegistry {
         code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
     }
 
-    function proxies(address owner_) public view returns (address proxy) {
-        proxy = seed[owner_] == 0
-            ? address(0)
-            : address(
-                uint160(
-                    uint256(
-                        keccak256(
-                            abi.encodePacked(
-                                bytes1(0xff),
-                                address(this),
-                                _salt(owner_),
-                                keccak256(_code(owner_))
-                            )
-                        )
-                    )
-                )
-            );
-    }
-
     function build(address owner_) external returns (address payable proxy) {
-        address payable proxy_ = payable(proxies(owner_));
-        require(proxy_ == address(0) || DssProxy(proxy_).owner() != owner_); // Not allow new proxy if the user already has one and remains being the owner
+        proxy = payable(proxies[owner_]);
+        require(proxy == address(0) || DssProxy(payable(proxy)).owner() != owner_, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
         seed[owner_]++;
         uint256 salt = _salt(owner_);
         bytes memory code = _code(owner_);
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
+        proxies[owner_] = proxy;
+        isProxy[proxy] = 1;
+    }
+
+    // This function needs to be used carefully, you should only claim a proxy you trust on.
+    // A proxy might be set up with an authority or just simple allowances that might make an
+    // attacker to take funds that are sitting in the proxy.
+    function claim(address proxy) external {
+        require(isProxy[proxy] == 1, "DssProxyRegistry/not-proxy-from-this-registry");
+        address owner = DssProxy(payable(proxy)).owner();
+        require(owner == msg.sender, "DssProxyRegistry/only-owner-can-claim");
+        address payable prevProxy = payable(proxies[owner]);
+        require(prevProxy == address(0) || DssProxy(prevProxy).owner() != owner, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
+        proxies[owner] = proxy;
     }
 }
