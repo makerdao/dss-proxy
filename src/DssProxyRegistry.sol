@@ -23,10 +23,6 @@ contract DssProxyRegistry {
     mapping (address => address) public proxies;
     mapping (address => uint256) public isProxy;
 
-    function _code(address owner_) internal pure returns (bytes memory code) {
-        code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
-    }
-
     function build(address owner_) external returns (address payable proxy) {
         proxy = payable(proxies[owner_]);
         require(proxy == address(0) || DssProxy(payable(proxy)).owner() != owner_, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
@@ -35,7 +31,7 @@ contract DssProxyRegistry {
         seed[owner_] = ++seed_;
         uint256 salt = uint256(keccak256(abi.encode(owner_, seed_)));
 
-        bytes memory code = _code(owner_);
+        bytes memory code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
