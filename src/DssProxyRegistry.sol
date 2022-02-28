@@ -47,7 +47,7 @@ contract DssProxyRegistry {
         address owner = DssProxy(payable(proxy)).owner();
         require(owner == msg.sender, "DssProxyRegistry/only-owner-can-claim");
         address payable prevProxy = payable(proxies[owner]);
-        require(prevProxy == address(0) || DssProxy(prevProxy).owner() != owner, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
+        require(prevProxy == address(0) || DssProxy(prevProxy).owner() != owner, "DssProxyRegistry/claimer-proxy-already-exists"); // Not allow new proxy if the user already has one and remains being the owner
         proxies[owner] = proxy;
     }
 }
