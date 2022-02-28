@@ -24,8 +24,8 @@ contract DssProxy {
     address public owner;
     address public authority;
 
-    event SetOwner(address indexed owner_);
-    event SetAuthority(address indexed authority_);
+    event SetOwner(address indexed owner);
+    event SetAuthority(address indexed authority);
 
     constructor(address owner_) {
         owner = owner_;
