@@ -27,9 +27,7 @@ contract DssProxyRegistry {
         proxy = payable(proxies[owner_]);
         require(proxy == address(0) || DssProxy(payable(proxy)).owner() != owner_, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
 
-        uint256 _seed = seed[owner_];
-        seed[owner_] = ++_seed;
-        uint256 salt = uint256(keccak256(abi.encode(owner_, _seed)));
+        uint256 salt = uint256(keccak256(abi.encode(owner_, ++seed[owner_])));
 
         bytes memory code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
         assembly {
