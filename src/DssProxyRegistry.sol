@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.11;
 
 import "./DssProxy.sol";
 
@@ -23,20 +23,13 @@ contract DssProxyRegistry {
     mapping (address => address) public proxies;
     mapping (address => uint256) public isProxy;
 
-    function _salt(address owner_) internal view returns (uint256 salt) {
-        salt = uint256(keccak256(abi.encode(owner_, seed[owner_])));
-    }
-
-    function _code(address owner_) internal pure returns (bytes memory code) {
-        code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
-    }
-
     function build(address owner_) external returns (address payable proxy) {
         proxy = payable(proxies[owner_]);
         require(proxy == address(0) || DssProxy(payable(proxy)).owner() != owner_, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
-        seed[owner_]++;
-        uint256 salt = _salt(owner_);
-        bytes memory code = _code(owner_);
+
+        uint256 salt = uint256(keccak256(abi.encode(owner_, ++seed[owner_])));
+
+        bytes memory code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
@@ -52,7 +45,7 @@ contract DssProxyRegistry {
         address owner = DssProxy(payable(proxy)).owner();
         require(owner == msg.sender, "DssProxyRegistry/only-owner-can-claim");
         address payable prevProxy = payable(proxies[owner]);
-        require(prevProxy == address(0) || DssProxy(prevProxy).owner() != owner, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
+        require(prevProxy == address(0) || DssProxy(prevProxy).owner() != owner, "DssProxyRegistry/owner-proxy-already-exists"); // Not allow new proxy if the user already has one and remains being the owner
         proxies[owner] = proxy;
     }
 }
