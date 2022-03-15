@@ -34,11 +34,6 @@ contract DssProxy {
     receive() external payable {
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner, "DssProxy/not-owner");
-        _;
-    }
-
     modifier auth {
         require(
             msg.sender == owner ||
@@ -48,12 +43,12 @@ contract DssProxy {
         _;
     }
 
-    function setOwner(address owner_) external onlyOwner {
+    function setOwner(address owner_) external auth {
         owner = owner_;
         emit SetOwner(owner_);
     }
 
-    function setAuthority(address authority_) external onlyOwner {
+    function setAuthority(address authority_) external auth {
         authority = authority_;
         emit SetAuthority(authority_);
     }
