@@ -74,10 +74,26 @@ contract DssProxyTest is DSTest {
         assertEq(proxy.owner(), address(123));
     }
 
+    function test_setOwnerViaAuthority() public {
+        proxy.setAuthority(address(new AllowEveryoneAuthority()));
+        proxy.setOwner(address(123));
+        assertEq(proxy.owner(), address(123));
+        proxy.setOwner(address(456));
+        assertEq(proxy.owner(), address(456));
+    }
+
     function test_setAuthority() public {
         assertEq(proxy.authority(), address(0));
         proxy.setAuthority(address(123));
         assertEq(proxy.authority(), address(123));
+    }
+
+    function test_setAuthorityViaAuthority() public {
+        proxy.setAuthority(address(new AllowEveryoneAuthority()));
+        proxy.setOwner(address(123));
+        assertEq(proxy.owner(), address(123));
+        proxy.setAuthority(address(456));
+        assertEq(proxy.authority(), address(456));
     }
 
     function test_execute() public {
@@ -96,13 +112,12 @@ contract DssProxyTest is DSTest {
         proxy2.execute(action, abi.encodeWithSignature("getBytes32()"));
     }
 
-    function test_execute_not_owner() public {
-        DssProxy proxy2 = new DssProxy(address(this));
-        proxy2.setAuthority(address(new AllowEveryoneAuthority()));
-        proxy2.setOwner(address(123));
-        assertEq(proxy2.owner(), address(123));
+    function test_executeViaAuthority() public {
+        proxy.setAuthority(address(new AllowEveryoneAuthority()));
+        proxy.setOwner(address(123));
+        assertEq(proxy.owner(), address(123));
 
-        bytes memory response = proxy2.execute(action, abi.encodeWithSignature("getBytes32()"));
+        bytes memory response = proxy.execute(action, abi.encodeWithSignature("getBytes32()"));
         bytes32 response32;
 
         assembly {
