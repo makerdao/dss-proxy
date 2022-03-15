@@ -60,7 +60,6 @@ contract DssProxy {
 
     function execute(address target_, bytes memory data_) external auth payable returns (bytes memory response) {
         require(target_ != address(0), "DssProxy/target-address-required");
-        address _owner = owner;
 
         assembly {
             let succeeded := delegatecall(gas(), target_, add(data_, 0x20), mload(data_), 0, 0)
@@ -76,7 +75,5 @@ contract DssProxy {
                 revert(add(response, 0x20), size)
             }
         }
-
-        require(owner == _owner, "DssProxy/owner-can-not-be-changed");
     }
 }
