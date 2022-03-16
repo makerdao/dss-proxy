@@ -23,7 +23,7 @@ contract DssProxyTest is DSTest {
         registry = new DssProxyRegistry();
     }
 
-    function test_proxy_creation() public {
+    function testProxyCreation() public {
         assertEq(registry.proxies(address(this)), address(0));
         assertEq(registry.seed(address(this)), 0);
         address payable proxyAddr = registry.build(address(this));
@@ -32,12 +32,12 @@ contract DssProxyTest is DSTest {
         assertEq(DssProxy(proxyAddr).owner(), address(this));
     }
 
-    function testFail_proxy_creation_existing() public {
+    function testFailProxyCreationExisting() public {
         registry.build(address(this));
         registry.build(address(this));
     }
 
-    function test_proxy_claim_and_creation_after_transfer() public {
+    function testProxyClaimAndCreationAfterTransfer() public {
 		Usr usr1 = new Usr();
 		Usr usr2 = new Usr();
 		address payable proxyAddr = registry.build(address(usr1));
@@ -80,17 +80,17 @@ contract DssProxyTest is DSTest {
 		assertEq(registry.proxies(address(usr2)), proxyAddr);
 	}
 
-	function testFail_claimNotAProxy() public {
+	function testFailClaimNotAProxy() public {
 		registry.claim(payable(address(111)));
 	}
 
-	function testFail_claimNotOwnedProxy() public {
+	function testFailClaimNotOwnedProxy() public {
 		address payable proxyAddr = registry.build(address(this));
 		DssProxy(proxyAddr).setOwner(address(123));
 		registry.claim(proxyAddr);
 	}
 
-	function testFail_claimProxyOtherOwned() public {
+	function testFailClaimProxyOtherOwned() public {
 		Usr usr1 = new Usr();
 		registry.build(address(usr1));
 		address payable proxyAddr = registry.build(address(this));

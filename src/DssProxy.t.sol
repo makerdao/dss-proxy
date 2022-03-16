@@ -68,13 +68,13 @@ contract DssProxyTest is DSTest {
         action = address(new TestAction());
     }
 
-    function test_setOwner() public {
+    function testSetOwner() public {
         assertEq(proxy.owner(), address(this));
         proxy.setOwner(address(123));
         assertEq(proxy.owner(), address(123));
     }
 
-    function test_setOwnerViaAuthority() public {
+    function testSetOwnerViaAuthority() public {
         proxy.setAuthority(address(new AllowEveryoneAuthority()));
         proxy.setOwner(address(123));
         assertEq(proxy.owner(), address(123));
@@ -82,13 +82,13 @@ contract DssProxyTest is DSTest {
         assertEq(proxy.owner(), address(456));
     }
 
-    function test_setAuthority() public {
+    function testSetAuthority() public {
         assertEq(proxy.authority(), address(0));
         proxy.setAuthority(address(123));
         assertEq(proxy.authority(), address(123));
     }
 
-    function test_setAuthorityViaAuthority() public {
+    function testSetAuthorityViaAuthority() public {
         proxy.setAuthority(address(new AllowEveryoneAuthority()));
         proxy.setOwner(address(123));
         assertEq(proxy.owner(), address(123));
@@ -96,7 +96,7 @@ contract DssProxyTest is DSTest {
         assertEq(proxy.authority(), address(456));
     }
 
-    function test_execute() public {
+    function testExecute() public {
         bytes memory response = proxy.execute(action, abi.encodeWithSignature("getBytes32()"));
         bytes32 response32;
 
@@ -107,12 +107,12 @@ contract DssProxyTest is DSTest {
         assertEq32(response32, bytes32("Hello"));
     }
 
-    function testFail_execute_not_owner() public {
+    function testFailExecuteNotOwner() public {
         DssProxy proxy2 = new DssProxy(address(123));
         proxy2.execute(action, abi.encodeWithSignature("getBytes32()"));
     }
 
-    function test_executeViaAuthority() public {
+    function testExecuteViaAuthority() public {
         proxy.setAuthority(address(new AllowEveryoneAuthority()));
         proxy.setOwner(address(123));
         assertEq(proxy.owner(), address(123));
@@ -127,7 +127,7 @@ contract DssProxyTest is DSTest {
         assertEq32(response32, bytes32("Hello"));
     }
 
-    function test_execute2Values() public {
+    function testExecute2Values() public {
         bytes memory response = proxy.execute(action, abi.encodeWithSignature("getBytes32AndUint()"));
 
         bytes32 response32;
@@ -142,7 +142,7 @@ contract DssProxyTest is DSTest {
         assertEq(responseUint, uint(150));
     }
 
-    function test_executeMultipleValues() public {
+    function testExecuteMultipleValues() public {
         bytes memory response = proxy.execute(action, abi.encodeWithSignature("getMultipleValues(uint256)", 10000));
 
         uint256 size;
@@ -162,7 +162,7 @@ contract DssProxyTest is DSTest {
         }
     }
 
-    function test_executeNot32Multiple() public {
+    function testExecuteNot32Multiple() public {
         bytes memory response = proxy.execute(action, abi.encodeWithSignature("get48Bytes()"));
 
         bytes memory test = new bytes(48);
@@ -171,7 +171,7 @@ contract DssProxyTest is DSTest {
         assertEq0(response, test);
     }
 
-    function test_executeFailMethod() public {
+    function testExecuteFailMethod() public {
         address payable target = payable(proxy);
         bytes memory data = abi.encodeWithSignature("execute(address,bytes)", action, abi.encodeWithSignature("fail()"));
 
@@ -206,7 +206,7 @@ contract DssProxyTest is DSTest {
         assertEq0(message, "Fail test case");
     }
 
-    function test_executeFailMethodAssembly() public {
+    function testExecuteFailMethodAssembly() public {
         address payable target = payable(proxy);
         action = address(new TestFullAssemblyContract());
         bytes memory data = abi.encodeWithSignature("execute(address,bytes)", action, hex"");
@@ -228,14 +228,14 @@ contract DssProxyTest is DSTest {
         assertEq0(response, "Fail test case");
     }
 
-    function test_depositETH() public {
+    function testDepositETH() public {
         assertEq(address(proxy).balance, 0);
         (bool success,) = address(proxy).call{value: 10}("");
         assertTrue(success);
         assertEq(address(proxy).balance, 10);
     }
 
-    function test_withdrawETH() public {
+    function testWithdrawETH() public {
         (bool success,) = address(proxy).call{value: 10}("");
         assertTrue(success);
         assertEq(address(proxy).balance, 10);
