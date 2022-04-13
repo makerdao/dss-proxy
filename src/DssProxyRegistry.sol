@@ -42,7 +42,7 @@ contract DssProxyRegistry {
     // A proxy might be set up with an authority or just simple allowances that might make an
     // attacker to take funds that are sitting in the proxy.
     function claim(address proxy) external {
-        require(isProxy[proxy] == 1, "DssProxyRegistry/not-proxy-from-this-registry");
+        require(isProxy[proxy] != 0, "DssProxyRegistry/not-proxy-from-this-registry");
         address owner = DssProxy(payable(proxy)).owner();
         require(owner == msg.sender, "DssProxyRegistry/only-owner-can-claim");
         address payable prevProxy = payable(proxies[owner]);
