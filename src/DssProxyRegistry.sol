@@ -33,6 +33,7 @@ contract DssProxyRegistry {
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
+        require(proxy != address(0), "DssProxyRegistry/creation-failed");
         proxies[owner_] = proxy;
         isProxy[proxy] = 1;
     }
