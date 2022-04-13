@@ -80,21 +80,26 @@ contract DssProxyTest is DSTest {
 		assertEq(registry.proxies(address(usr2)), proxyAddr);
 	}
 
+	function testClaimOtherProxyOwned() public {
+		Usr usr1 = new Usr();
+		address payable proxyAddr1 = registry.build(address(usr1));
+		assertEq(registry.proxies(address(usr1)), proxyAddr1);
+		address payable proxyAddr2 = registry.build(address(this));
+		DssProxy(proxyAddr2).setOwner(address(usr1));
+		usr1.claimProxy(registry, proxyAddr2);
+		assertEq(registry.proxies(address(usr1)), proxyAddr2);
+		usr1.claimProxy(registry, proxyAddr1);
+		assertEq(registry.proxies(address(usr1)), proxyAddr1);
+	}
+
 	function testFailClaimNotAProxy() public {
 		registry.claim(payable(address(111)));
 	}
 
 	function testFailClaimNotOwnedProxy() public {
+		Usr usr1 = new Usr();
 		address payable proxyAddr = registry.build(address(this));
 		DssProxy(proxyAddr).setOwner(address(123));
-		registry.claim(proxyAddr);
-	}
-
-	function testFailClaimProxyOtherOwned() public {
-		Usr usr1 = new Usr();
-		registry.build(address(usr1));
-		address payable proxyAddr = registry.build(address(this));
-		DssProxy(proxyAddr).setOwner(address(usr1));
 		usr1.claimProxy(registry, proxyAddr);
 	}
 }
