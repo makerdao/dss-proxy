@@ -29,6 +29,7 @@ contract DssProxy {
 
     constructor(address owner_) {
         owner = owner_;
+        emit SetOwner(owner_);
     }
 
     receive() external payable {
