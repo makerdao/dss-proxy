@@ -23,20 +23,25 @@ contract DssProxyRegistry {
     mapping (address => address) public proxies;
     mapping (address => uint256) public isProxy;
 
-    function build(address owner_) external returns (address payable proxy) {
-        proxy = payable(proxies[owner_]);
-        require(proxy == address(0) || DssProxy(payable(proxy)).owner() != owner_, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
+    function build(address usr) external returns (address payable proxy) {
+        proxy = payable(proxies[usr]);
 
-        uint256 salt = uint256(keccak256(abi.encode(owner_, ++seed[owner_])));
+        (, bytes memory owner) = proxy.call(abi.encodeWithSignature("owner()")); // Using low level call in case proxy was self destructed
 
-        bytes memory code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
+        require(proxy == address(0) || owner.length != 32 || abi.decode(owner, (address)) != usr, "DssProxyRegistry/proxy-already-registered-to-user"); // Not allow new proxy if the user already has one and remains being the owner
+
+        uint256 salt = uint256(keccak256(abi.encode(usr, ++seed[usr])));
+
+        bytes memory code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(usr));
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
         require(proxy != address(0), "DssProxyRegistry/creation-failed");
-        proxies[owner_] = proxy;
+
+        proxies[usr] = proxy;
         isProxy[proxy] = 1;
     }
+
 
     // This function needs to be used carefully, you should only claim a proxy you trust on.
     // A proxy might be set up with an authority or just simple allowances that might make an
