@@ -24,8 +24,9 @@ contract DssProxy {
     address public owner;
     address public authority;
 
-    event SetOwner(address indexed owner);
-    event SetAuthority(address indexed authority);
+    event SetOwner(address indexed owner_);
+    event SetAuthority(address indexed authority_);
+    event Execute(address indexed target_, bytes data_);
 
     constructor(address owner_) {
         owner = owner_;
@@ -71,5 +72,7 @@ contract DssProxy {
                 revert(add(response, 0x20), size)
             }
         }
+
+        emit Execute(target_, data_);
     }
 }
