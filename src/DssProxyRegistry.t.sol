@@ -46,6 +46,7 @@ contract DssProxyTest is DSTest {
     }
 
     function testProxyCreationAfterSelfDestruct() public {
+        // proxy for address(this) was selfdestructed during setup
         registry.build(address(this));
     }
 
