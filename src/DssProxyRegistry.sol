@@ -23,17 +23,21 @@ contract DssProxyRegistry {
     mapping (address => address) public proxies;
     mapping (address => uint256) public isProxy;
 
-    function build(address owner_) external returns (address payable proxy) {
-        proxy = payable(proxies[owner_]);
-        require(proxy == address(0) || DssProxy(payable(proxy)).owner() != owner_, "DssProxyRegistry/proxy-registered-to-owner"); // Not allow new proxy if the user already has one and remains being the owner
+    function build(address usr) external returns (address payable proxy) {
+        proxy = payable(proxies[usr]);
+        if (proxy != address(0)) {
+            (, bytes memory owner) = proxy.call(abi.encodeWithSignature("owner()")); // Using low level call in case proxy was self destructed
+            require(owner.length != 32 || abi.decode(owner, (address)) != usr, "DssProxyRegistry/proxy-already-registered-to-user"); // Not allow new proxy if the user already has one and remains being the owner
+        }
 
-        uint256 salt = uint256(keccak256(abi.encode(owner_, ++seed[owner_])));
-
-        bytes memory code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(owner_));
+        uint256 salt = uint256(keccak256(abi.encode(usr, ++seed[usr])));
+        bytes memory code = abi.encodePacked(type(DssProxy).creationCode, abi.encode(usr));
         assembly {
             proxy := create2(0, add(code, 0x20), mload(code), salt)
         }
-        proxies[owner_] = proxy;
+        require(proxy != address(0), "DssProxyRegistry/creation-failed");
+
+        proxies[usr] = proxy;
         isProxy[proxy] = 1;
     }
 
@@ -41,11 +45,9 @@ contract DssProxyRegistry {
     // A proxy might be set up with an authority or just simple allowances that might make an
     // attacker to take funds that are sitting in the proxy.
     function claim(address proxy) external {
-        require(isProxy[proxy] == 1, "DssProxyRegistry/not-proxy-from-this-registry");
+        require(isProxy[proxy] != 0, "DssProxyRegistry/not-proxy-from-this-registry");
         address owner = DssProxy(payable(proxy)).owner();
         require(owner == msg.sender, "DssProxyRegistry/only-owner-can-claim");
-        address payable prevProxy = payable(proxies[owner]);
-        require(prevProxy == address(0) || DssProxy(prevProxy).owner() != owner, "DssProxyRegistry/owner-proxy-already-exists"); // Not allow new proxy if the user already has one and remains being the owner
         proxies[owner] = proxy;
     }
 }

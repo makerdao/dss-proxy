@@ -31,6 +31,7 @@ contract DssProxy {
 
     constructor(address owner_) {
         owner = owner_;
+        emit SetOwner(owner_);
     }
 
     receive() external payable {
@@ -67,8 +68,8 @@ contract DssProxy {
             mstore(response, size)
             returndatacopy(add(response, 0x20), 0, size)
 
-            switch iszero(succeeded)
-            case 1 {
+            switch succeeded
+            case 0 {
                 revert(add(response, 0x20), size)
             }
         }
