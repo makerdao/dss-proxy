@@ -39,6 +39,7 @@ contract DssProxy {
 
     modifier auth {
         require(
+            msg.sender == address(this) ||
             msg.sender == owner ||
             authority != address(0) && AuthorityLike(authority).canCall(msg.sender, address(this), msg.sig),
             "DssProxy/not-authorized"
