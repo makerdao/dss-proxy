@@ -23,8 +23,8 @@ interface AuthorityLike {
 }
 
 contract DssProxy {
-    address public owner;
     address public authority;
+    address public owner;
 
     event SetOwner(address indexed owner);
     event SetAuthority(address indexed authority);
