@@ -16,15 +16,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.14;
 
 interface AuthorityLike {
     function canCall(address src, address dst, bytes4 sig) external view returns (bool);
 }
 
 contract DssProxy {
-    address public owner;
     address public authority;
+    address public owner;
 
     event SetOwner(address indexed owner);
     event SetAuthority(address indexed authority);
@@ -39,6 +39,7 @@ contract DssProxy {
 
     modifier auth {
         require(
+            msg.sender == address(this) ||
             msg.sender == owner ||
             authority != address(0) && AuthorityLike(authority).canCall(msg.sender, address(this), msg.sig),
             "DssProxy/not-authorized"

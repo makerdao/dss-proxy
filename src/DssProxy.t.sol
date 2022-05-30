@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.14;
 
 import "ds-test/test.sol";
 
@@ -45,6 +45,14 @@ contract TestAction {
             mstore(result, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             mstore(add(result, 0x20), "AAAAAAAAAAAAAAAA")
             return(result, 0x30)
+        }
+    }
+
+    function recursive(address action) public returns (bytes32 response32) {
+        bytes memory response = DssProxy(payable(address(this))).execute(action, abi.encodeWithSignature('getBytes32()'));
+
+        assembly {
+            response32 := mload(add(response, 32))
         }
     }
 
@@ -134,6 +142,17 @@ contract DssProxyTest is DSTest {
         assertEq(proxy.owner(), address(123));
 
         bytes memory response = proxy.execute(action, abi.encodeWithSignature("getBytes32()"));
+        bytes32 response32;
+
+        assembly {
+            response32 := mload(add(response, 32))
+        }
+
+        assertEq32(response32, bytes32("Hello"));
+    }
+
+    function testExecuteRecursive() public {
+        bytes memory response = proxy.execute(action, abi.encodeWithSignature("recursive(address)", action));
         bytes32 response32;
 
         assembly {
